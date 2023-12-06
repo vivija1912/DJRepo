@@ -1,33 +1,26 @@
-DECLARE @JSON_data VARCHAR(MAX)
-FROM OPENROWSET (BULK 'C:\Users\vivija\Desktop\sql\CustData_Viv1000.json', SINGLE_CLOB) import
 
+DECLARE @customer_data VARCHAR(MAX)
 
-SELECT * FROM OPENJSON (@JSON_data)
+SELECT @customer_data = BulkColumn
+FROM OPENROWSET(BULK 'C:\Users\vivij\vivijagithub\DJRepo\CustData_1000Records.json', SINGLE_CLOB) as j;
 
 with cte_custdata as
-(SELECT * 
-FROM OPENJSON (@JSON_data, '$.header.columns') 
+(
+SELECT customer_id, name , email, purchase_amount FROM OPENJSON (@customer_data) j cross apply 
+OPENJSON (j.[Value]) 
      WITH (customer_id INT,
            name VARCHAR(50),
            email VARCHAR(100),
-           purchase_price DECIMAL(5,2),
+           purchase_amount DECIMAL(5,2),
            purchase_date DATE)
 )
-select customer_id, name, email, purchase_price,
+select customer_id, name, email, purchase_amount,
 		case 
-			when purchase_price < 100 then "Low"
-			when purchase_price between 100 and 500 then "Medium"
-			else "High" 
-		end as segment into CusSeg from cte_custdata
-		
---Export CusSeg data into csv format via SQL management Studio . Right Click on table -> tasks -> Export
---else
--- RC on the resultset ->Copy with Headers
---else
----Using the SQLCMD Utility
---sqlcmd -S DESKTOP-INGEKE8\MSSQLSERVER,1433
---Q "select * from CusSeg"
--- –s "," –o "C:\Users\Vivija\Desktop\sql\CusSeg.csv" -E
+			when purchase_amount < 100 then 'Low'
+			when purchase_amount between 100 and 500 then 'Medium'
+			else 'High' 
+		end as segment  from cte_custdata
+
 
 
 		
